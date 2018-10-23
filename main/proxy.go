@@ -21,17 +21,17 @@
 package main
 
 import (
-	"net"
-	"log"
-	"fmt"
 	"bytes"
+	"fmt"
+	"io"
+	"log"
+	"net"
 	"net/url"
 	"strings"
-	"io"
 )
 
 type Proxy struct {
-	address net.Addr
+	address  net.Addr
 	listener net.Listener
 }
 
@@ -51,7 +51,7 @@ func (p *Proxy) init(address string) {
 	log.Println("Proxy run on address " + p.address.String())
 }
 
-func (p *Proxy) loop()  {
+func (p *Proxy) loop() {
 
 	for {
 		client, err := p.listener.Accept()
@@ -85,9 +85,9 @@ func handleClientRequest(client net.Conn) {
 
 	if hostPortURL.Opaque == "443" {
 		address = hostPortURL.Scheme
-		port =  "443"
+		port = "443"
 	} else { //http访问
-		if strings.Index(hostPortURL.Host, ":") == -1 { //host不带端口， 默认80
+		if strings.Index(hostPortURL.Host, ":") == -1 {
 			address = hostPortURL.Host
 			port = "80"
 		} else {
@@ -96,9 +96,13 @@ func handleClientRequest(client net.Conn) {
 		}
 	}
 
-	log.Println("Host: " + address + " ==> " + ServeDNS(address))
+	if address != ServeDNS(address) {
+		log.Println("Host: " + address + " --> " + ServeDNS(address))
+	} else {
+		log.Println("Host: " + address)
+	}
 
-	server, err := net.Dial("tcp", ServeDNS(address) + ":" + port)
+	server, err := net.Dial("tcp", ServeDNS(address)+":"+port)
 	if err != nil {
 		log.Println(err)
 		return

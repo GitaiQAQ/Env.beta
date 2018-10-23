@@ -21,21 +21,32 @@
 package main
 
 import (
+	"flag"
 	"log"
+	"os"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags)
 
+	var _ = os.Args
+
+	address := flag.String("address", "", "Proxy listen address")
+	var program string
+	flag.StringVar(&program, "browser", "chrome", "Browser name or Path, only support \"Chrome\" or \"Firefox\"")
+	flag.Parse()
+	var urls = flag.Args()
+	if len(urls) == 0 {
+		urls = append(urls, "https://github.com/GitaiQAQ/Env.beta")
+	}
+
 	var proxy = Proxy{}
-	proxy.init("")
+	proxy.init(*address)
 
 	var c = Command{}
-	var program = "chrome"
-	c.Build(program)
+	c.Init(program)
 	c.SetProxyServer(proxy.address)
-	c.SetLang("local")
-	c.Start([]string{"https://github.com/GitaiQAQ/Env.beta"})
+	c.Start(urls)
 
 	proxy.loop()
 }
