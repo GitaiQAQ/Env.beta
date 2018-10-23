@@ -29,7 +29,10 @@ import (
 	"log"
 	"os/exec"
 	"path/filepath"
+	"net"
 )
+
+// https://peter.sh/experiments/chromium-command-line-switches/
 
 type Command struct {
 	Program		string
@@ -148,8 +151,13 @@ func (c *Command) SetBrowserPath() {
 	c.BrowserPath = _GetBrowserPath(runtime.GOOS, runtime.GOARCH, c.Program)
 }
 
-func (c *Command) SetProxyServer(proxy string) {
-	c.ProxyServer = proxy
+func (c *Command) SetProxyServer(proxy interface{}) {
+	switch proxy.(type) {
+	case string:
+		c.ProxyServer = proxy.(string)
+	case net.Addr:
+		c.ProxyServer = proxy.(net.Addr).String()
+	}
 }
 
 func (c *Command) SetLang(lang string)  {
@@ -186,7 +194,7 @@ func (c *Command) Start(urls []string)  {
 
 	switch c.Program {
 	case "chrome":
-		args = append(args, c.BrowserPath, "--user-data-dir=" + c.UserDataDir, "--proxy-server=" + c.ProxyServer, "--lang=" + c.Lang)
+		args = append(args, c.BrowserPath, "--user-data-dir=" + c.UserDataDir, "--proxy-server=" + c.ProxyServer, "--in-process-plugins", "-incognito", "--allow-running-insecure-content", "--lang=" + c.Lang)
 	}
 
 	cmd := exec.Command(args[0], append(args[1:], urls...)...)
@@ -201,5 +209,5 @@ func test() {
 	command.Build(program)
 	command.SetProxyServer("localhost:8080")
 	command.SetLang("local")
-	command.Start([]string{"chrome://version/"})
+	command.Start([]string{"about:version"})
 }

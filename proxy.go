@@ -30,16 +30,31 @@ import (
 	"io"
 )
 
-func startProxt()  {
-	l, err := net.Listen("tcp", ":8080")
+type Proxy struct {
+	address net.Addr
+	listener net.Listener
+}
+
+func (p *Proxy) init(address string) {
+	if address == "" {
+		address = "127.0.0.1:0"
+	}
+
+	l, err := net.Listen("tcp", address) // listen on localhost with random port
 	if err != nil {
 		log.Panic(err)
 	}
 
-	log.Println("Proxy run on localhost:8080")
+	p.listener = l
+	p.address = l.Addr()
+
+	log.Println("Proxy run on address " + p.address.String())
+}
+
+func (p *Proxy) loop()  {
 
 	for {
-		client, err := l.Accept()
+		client, err := p.listener.Accept()
 		if err != nil {
 			log.Panic(err)
 		}
@@ -99,5 +114,7 @@ func handleClientRequest(client net.Conn) {
 }
 
 func testa() {
-	startProxt()
+	var proxy = Proxy{}
+	proxy.init("")
+	proxy.loop()
 }

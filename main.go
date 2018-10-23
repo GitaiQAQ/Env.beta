@@ -27,12 +27,15 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags)
 
+	var proxy = Proxy{}
+	proxy.init("")
+
 	var c = Command{}
 	var program = "chrome"
 	c.Build(program)
-	c.SetProxyServer("localhost:8080")
+	c.SetProxyServer(proxy.address)
 	c.SetLang("local")
-	c.Start([]string{"chrome://version/"})
+	c.Start([]string{"https://github.com/GitaiQAQ/Env.beta"})
 
-	startProxt()
+	proxy.loop()
 }
