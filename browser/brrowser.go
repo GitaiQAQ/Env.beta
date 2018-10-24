@@ -1,7 +1,7 @@
 package browser
 
 type IBrowser interface {
-	BaseArgs() string					// 基础参数
+	BaseArgs () string					// 基础参数
 
 	ProgramDir() string                // 程序目录
 	Execable() string                  // 可执行文件路径
@@ -10,9 +10,5 @@ type IBrowser interface {
 	Incognito() string                 // 匿名/无痕/隐私模式
 	ProxyServer(address string) string // 代理接口
 
-	Tpl() string // 默认的命令模板
-}
-
-func appendFuncMap(browser IBrowser) {
-
+	Tpl() string 						// 默认的命令模板
 }

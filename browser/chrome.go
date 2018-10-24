@@ -11,11 +11,11 @@ type Chrome struct {
 	name string
 }
 
-func (c Chrome) BaseArgs() string {
+func (c *Chrome) BaseArgs() string {
 	return "--lang=local"
 }
 
-func (c Chrome) ProgramDir() string {
+func (c *Chrome) ProgramDir() string {
 	var programFile string
 	switch runtime.GOOS {
 	case "darwin":
@@ -39,15 +39,15 @@ func (c Chrome) ProgramDir() string {
 	return filepath.Dir(programFile)
 }
 
-func (c Chrome) Execable() string {
+func (c *Chrome) Execable() string {
 	return "chrome.exe"
 }
 
-func (c Chrome) Profile() string {
+func (c *Chrome) Profile() string {
 	return ""
 }
 
-func (c Chrome) ProfileDir() string {
+func (c *Chrome) ProfileDir() string {
 	configDirs := configdir.New("Env.Beta", "Chrome")
 	cache := configDirs.QueryCacheFolder()
 	if !cache.Exists("First Run") {
@@ -56,17 +56,17 @@ func (c Chrome) ProfileDir() string {
 	return "--user-data-dir=\"" + cache.Path + "\""
 }
 
-func (c Chrome) Incognito() string {
+func (c *Chrome) Incognito() string {
 	return "-incognito"
 }
 
-func (c Chrome) ProxyServer(address string) string {
+func (c *Chrome) ProxyServer(address string) string {
 	return "--proxy-server=" + address
 }
 
-func (c Chrome) Tpl() string {
+func (c *Chrome) Tpl() string {
 	if c.ProfileDir() != "" {
-		return "/d {{Escape ProgramDir}} {{Execable}} {{ProfileDir}} {{Incognito}} {{ProxyServer .ProxyServer}} {{ BaseArgs }}"
+		return "/D {{Escape ProgramDir}} {{Execable}} {{ProfileDir}} {{Incognito}} {{ProxyServer .ProxyServer}} {{ BaseArgs }}"
 	}
 	return "chrome {{ProfileDir}} {{Incognito}} {{ProxyServer .ProxyServer}} {{ BaseArgs }}"
 }

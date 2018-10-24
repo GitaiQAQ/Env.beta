@@ -55,10 +55,10 @@ func (c *Command) SetExecer() {
 func (c *Command) SetBrowser(program string) {
 	switch program {
 	case "chrome":
-		c.Browser = browser.Chrome{}
+		c.Browser = &browser.Chrome{}
 		break
 	case "firefox":
-		c.Browser = browser.Firefox{}
+		c.Browser = &browser.Firefox{}
 		break
 	}
 	log.Println("Use browser " + program)
