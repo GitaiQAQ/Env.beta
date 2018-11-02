@@ -18,7 +18,6 @@ func CmdRun(path string, args ...string) string {
 	return string(out)
 }
 
-
 func Exists(path string) bool {
 	_, err := os.Stat(path) //os.Stat获取文件信息
 	if err != nil {

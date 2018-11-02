@@ -1,20 +1,20 @@
 package browser
 
 import (
-	"github.com/gitaiqaq/Env.Beta/utils"
-	"runtime"
-	"strings"
-	"regexp"
-	"os"
-	"fmt"
 	"bufio"
+	"fmt"
+	"github.com/gitaiqaq/Env.Beta/utils"
 	"io"
 	"log"
+	"os"
+	"regexp"
+	"runtime"
 	"strconv"
+	"strings"
 )
 
 type FirefoxProfile struct {
-	userjs string
+	userjs      string
 	preferences map[string]interface{}
 }
 
@@ -23,7 +23,7 @@ func (p FirefoxProfile) set_preference(key string, value interface{}) {
 }
 
 func (p FirefoxProfile) _write_user_prefs() {
-	fi, err := os.OpenFile(p.userjs, os.O_RDWR | os.O_APPEND, 0777)
+	fi, err := os.OpenFile(p.userjs, os.O_RDWR|os.O_APPEND, 0777)
 	if err != nil {
 		log.Printf("Error: %s\n", err)
 		return
@@ -31,7 +31,7 @@ func (p FirefoxProfile) _write_user_prefs() {
 
 	for item := range p.preferences {
 		value := p.preferences[item]
-		_, err := fi.WriteString(`user_pref("` +  item + `", `)
+		_, err := fi.WriteString(`user_pref("` + item + `", `)
 		if err != nil {
 			log.Fatalf("Error: %s\n", err)
 		}
@@ -97,10 +97,10 @@ func (p FirefoxProfile) _read_existing_userjs() {
 type Firefox struct {
 	Name string
 
-	path string
+	path    string
 	profile FirefoxProfile
-	Host string
-	Port uint64
+	Host    string
+	Port    uint64
 }
 
 func (c *Firefox) BaseArgs() string {
@@ -142,7 +142,7 @@ func (c *Firefox) Profile() string {
 }
 
 func (c *Firefox) ProfileDir() string {
-	out := utils.CmdRun(c.ProgramDir() + c.Execable(), "-CreateProfile", c.Profile())
+	out := utils.CmdRun(c.ProgramDir()+c.Execable(), "-CreateProfile", c.Profile())
 
 	var path string
 	for _, token := range strings.Split(out, "'") {
@@ -166,7 +166,7 @@ func (c *Firefox) ProxyServer(address string) string {
 	port, _ := strconv.ParseUint(adds[1], 10, 0)
 
 	c.profile = FirefoxProfile{
-		userjs: c.path,
+		userjs:      c.path,
 		preferences: make(map[string]interface{}),
 	}
 	// profile._read_existing_userjs()

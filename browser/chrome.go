@@ -1,10 +1,10 @@
 package browser
 
 import (
-	"github.com/shibukawa/configdir"
-	"runtime"
 	"github.com/gitaiqaq/Env.Beta/utils"
+	"github.com/shibukawa/configdir"
 	"path/filepath"
+	"runtime"
 )
 
 type Chrome struct {

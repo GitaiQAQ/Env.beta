@@ -21,16 +21,16 @@
 package main
 
 import (
+	"github.com/gitaiqaq/Env.Beta/browser"
 	"github.com/gitaiqaq/Env.Beta/utils"
+	"github.com/kballard/go-shellquote"
+	"log"
 	"net"
+	"os"
 	"runtime"
 	"strings"
 	"syscall"
 	"text/template"
-	"github.com/gitaiqaq/Env.Beta/browser"
-	"github.com/kballard/go-shellquote"
-	"log"
-	"os"
 )
 
 // https://peter.sh/experiments/chromium-command-line-switches/
@@ -86,13 +86,13 @@ func (c *Command) String(appTpl string) string {
 	var funs = template.FuncMap{
 		"StringsJoin": strings.Join,
 		"Escape":      syscall.EscapeArg,
-		"BaseArgs":		c.Browser.BaseArgs,
-		"ProgramDir":		c.Browser.ProgramDir,
-		"Execable":		c.Browser.Execable,
-		"Profile":		c.Browser.Profile,
-		"ProfileDir":		c.Browser.ProfileDir,
-		"Incognito":		c.Browser.Incognito,
-		"ProxyServer":		c.Browser.ProxyServer,
+		"BaseArgs":    c.Browser.BaseArgs,
+		"ProgramDir":  c.Browser.ProgramDir,
+		"Execable":    c.Browser.Execable,
+		"Profile":     c.Browser.Profile,
+		"ProfileDir":  c.Browser.ProfileDir,
+		"Incognito":   c.Browser.Incognito,
+		"ProxyServer": c.Browser.ProxyServer,
 	}
 
 	tmpl, err := template.New("command").Funcs(funs).Parse(appTpl)

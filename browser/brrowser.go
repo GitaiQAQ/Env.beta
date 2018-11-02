@@ -1,7 +1,7 @@
 package browser
 
 type IBrowser interface {
-	BaseArgs () string					// 基础参数
+	BaseArgs() string // 基础参数
 
 	ProgramDir() string                // 程序目录
 	Execable() string                  // 可执行文件路径

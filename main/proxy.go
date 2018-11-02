@@ -33,6 +33,7 @@ import (
 type Proxy struct {
 	address  net.Addr
 	listener net.Listener
+	dns ServeDNS
 }
 
 func (p *Proxy) init(address string) {
@@ -49,6 +50,9 @@ func (p *Proxy) init(address string) {
 	p.address = l.Addr()
 
 	log.Println("Proxy run on address " + p.address.String())
+
+	p.dns.load()
+
 }
 
 func (p *Proxy) loop() {
@@ -59,11 +63,11 @@ func (p *Proxy) loop() {
 			log.Panic(err)
 		}
 
-		go handleClientRequest(client)
+		go handleClientRequest(p.dns, client)
 	}
 }
 
-func handleClientRequest(client net.Conn) {
+func handleClientRequest(dns ServeDNS, client net.Conn) {
 	if client == nil {
 		return
 	}
@@ -96,13 +100,15 @@ func handleClientRequest(client net.Conn) {
 		}
 	}
 
-	if address != ServeDNS(address) {
-		log.Println("Host: " + address + " --> " + ServeDNS(address))
+	dnsRes := dns.find(address)
+
+	if address != dnsRes {
+		log.Println("Host: " + address + " --> " + dnsRes)
 	} else {
 		log.Println("Host: " + address)
 	}
 
-	server, err := net.Dial("tcp", ServeDNS(address)+":"+port)
+	server, err := net.Dial("tcp", dnsRes + ":" + port)
 	if err != nil {
 		log.Println(err)
 		return
