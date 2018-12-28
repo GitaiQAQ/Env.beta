@@ -56,7 +56,6 @@ func (p *Proxy) init(address string) {
 }
 
 func (p *Proxy) loop() {
-
 	for {
 		client, err := p.listener.Accept()
 		if err != nil {
@@ -80,7 +79,7 @@ func handleClientRequest(dns ServeDNS, client net.Conn) {
 		return
 	}
 	var method, host, address, port string
-	fmt.Sscanf(string(b[:bytes.IndexByte(b[:], '\n')]), "%s%s", &method, &host)
+	_, _ = fmt.Sscanf(string(b[:bytes.IndexByte(b[:], '\n')]), "%s%s", &method, &host)
 	hostPortURL, err := url.Parse(host)
 	if err != nil {
 		log.Println(err)
@@ -91,13 +90,19 @@ func handleClientRequest(dns ServeDNS, client net.Conn) {
 		address = hostPortURL.Scheme
 		port = "443"
 	} else { //http访问
-		if strings.Index(hostPortURL.Host, ":") == -1 {
+		index := strings.Index(hostPortURL.Host, ":")
+		if index == -1 {
 			address = hostPortURL.Host
 			port = "80"
 		} else {
-			address = hostPortURL.Host
+			address = hostPortURL.Host[:index]
 			port = hostPortURL.Port()
 		}
+	}
+
+	if address == "env" {
+		handler(client, io.MultiReader(bytes.NewReader(b[:n]), client))
+		return
 	}
 
 	dnsRes := dns.find(address)
@@ -114,9 +119,9 @@ func handleClientRequest(dns ServeDNS, client net.Conn) {
 		return
 	}
 	if method == "CONNECT" {
-		fmt.Fprint(client, "HTTP/1.1 200 Connection established\r\n\r\n")
+		_, _ = fmt.Fprint(client, "HTTP/1.1 200 Connection established\r\n\r\n")
 	} else {
-		server.Write(b[:n])
+		_, _ = server.Write(b[:n])
 	}
 
 	go io.Copy(server, client)
