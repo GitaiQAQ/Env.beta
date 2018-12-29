@@ -34,6 +34,7 @@ type Proxy struct {
 	address  net.Addr
 	listener net.Listener
 	dns ServeDNS
+	editor Editor
 }
 
 func (p *Proxy) init(address string) {
@@ -51,8 +52,8 @@ func (p *Proxy) init(address string) {
 
 	log.Println("Proxy run on address " + p.address.String())
 
-	p.dns.load()
-
+	p.dns.loadFile()
+	p.editor.handler = &p.dns
 }
 
 func (p *Proxy) loop() {
@@ -62,11 +63,11 @@ func (p *Proxy) loop() {
 			log.Panic(err)
 		}
 
-		go handleClientRequest(p.dns, client)
+		go handleClientRequest(p.dns, client, &p.editor)
 	}
 }
 
-func handleClientRequest(dns ServeDNS, client net.Conn) {
+func handleClientRequest(dns ServeDNS, client net.Conn, editor *Editor) {
 	if client == nil {
 		return
 	}
@@ -101,7 +102,7 @@ func handleClientRequest(dns ServeDNS, client net.Conn) {
 	}
 
 	if address == "env" {
-		handler(client, io.MultiReader(bytes.NewReader(b[:n]), client))
+		editor.handleClientRequest(client, io.MultiReader(bytes.NewReader(b[:n]), client))
 		return
 	}
 

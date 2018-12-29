@@ -23,12 +23,14 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"time"
 )
 
 var httpTpl = `
@@ -82,7 +84,7 @@ var httpTpl = `
     <p><code>Ctrl+S</code>: Save and Apply</p>
 </div>
 <div class="editor">
-    <textarea id="code" name="code">127.0.0.1   www.example.com, *.baidu.com</textarea>
+    <textarea id="code" name="code">{{Data}}</textarea>
     <script src="https://cdn.bootcss.com/codemirror/5.42.2/codemirror.min.js"></script>
     <script>
         let form = document.getElementsByTagName("form")[0];
@@ -103,29 +105,68 @@ var httpTpl = `
 </html>
 `
 
-func handler(conn net.Conn, reader io.Reader) {
+type Editor struct {
+	data       []byte
+	lastModify time.Time
+	handler Handler
+}
+
+type Handler interface {
+	onChange(editor *Editor)
+}
+
+func (e * Editor)handleClientRequest(conn net.Conn, reader io.Reader) {
 	request, err := http.ReadRequest(bufio.NewReader(reader))
 	if err != nil {
 		fmt.Print(err)
 	}
 	writer := httptest.NewRecorder()
 	if request.Method == "GET" {
-		get(request, writer)
+		e.get(request, writer)
 	} else {
-		post(request, writer)
+		e.post(request, writer)
 	}
 	_ = writer.Result().Write(conn)
 }
 
-func get(request *http.Request, response http.ResponseWriter) {
-	body := httpTpl
-	_, _ = response.Write([]byte(body))
+func (e *Editor) getData() string {
+	defer func() {
+		if err := recover();err != nil {
+			fmt.Println(err)
+		}
+	}()
+	if e.data == nil {
+		f := loadConfig()
+		e.data, _ = ioutil.ReadAll(f)
+		defer f.Close()
+	}
+	return string(e.data)
 }
 
-func post(request *http.Request, response http.ResponseWriter)  {
+func (e * Editor)get(request *http.Request, response http.ResponseWriter) {
+	var funs = template.FuncMap{
+		"Data": e.getData,
+	}
+	tmpl, err := template.New("body").Funcs(funs).Parse(httpTpl)
+	if err != nil {
+		print(err)
+	}
+	var b = &strings.Builder{}
+	err = tmpl.Execute(b, e)
+	if err != nil {
+		print(err)
+	}
+	_, _ = response.Write([]byte(b.String()))
+}
+
+func (e * Editor)post(request *http.Request, response http.ResponseWriter)  {
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		panic(err)
 	}
-	log.Println(string(body))
+	e.data = body
+	e.lastModify = time.Now()
+	if e.handler != nil {
+		e.handler.onChange(e)
+	}
 }

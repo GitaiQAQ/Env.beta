@@ -36,7 +36,7 @@ func main() {
 
 	var urls = flag.Args()
 	if len(urls) == 0 {
-		urls = append(urls, "https://github.com/GitaiQAQ/Env.beta")
+		urls = append(urls, "http://env/")
 	}
 
 	var proxy = Proxy{}

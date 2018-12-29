@@ -22,11 +22,13 @@ package main
 
 import (
 	"bufio"
-	"os"
+	"bytes"
+	"fmt"
 	"io"
-	"strings"
 	"log"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 // ParseHosts takes in hosts file content and returns a map of parsed results.
@@ -56,57 +58,71 @@ func ParseHosts(hostsFileContent []byte, err error) (map[string][]string, error)
 
 
 type ServeDNS struct {
-	data []byte
 	tree *Node
 }
 
-type States struct {
-	serveDNS *ServeDNS
-}
-
-// private
-var instance *States
-
-// public
-func GetInstance() *States {
-	if instance == nil {
-		instance = &States{}     // not thread safe
+func (s *ServeDNS) onChange(editor *Editor)  {
+	if editor.data != nil {
+		s._load(bufio.NewReader(bytes.NewReader(editor.data)))
+		s.saveFile(editor.data)
 	}
-	return instance
 }
 
-func (s *ServeDNS) clear()  {
-	s.tree = &Node{}
-}
-
-
-func (s *ServeDNS) load(){
+func loadConfig() *os.File {
 	f, err := os.Open("hosts.conf")
 	path, _ := filepath.Abs(f.Name())
 	log.Println("Load Config from " + path)
+	if err != nil {
+		log.Printf("Error: %s\n", err)
+		return nil
+	}
+	return f
+}
+
+func (s *ServeDNS) loadFile(){
+	defer func() {
+		if err := recover();err != nil {
+			fmt.Println(err)
+		}
+	}()
+	f := loadConfig()
+	br := bufio.NewReader(f)
+	s._load(br)
+	defer f.Close()
+}
+
+func (s *ServeDNS) saveFile(b []byte){
+	defer func() {
+		if err := recover();err != nil {
+			fmt.Println(err)
+		}
+	}()
+	f, err := os.OpenFile("hosts.conf", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	path, _ := filepath.Abs(f.Name())
+	log.Println("Save Config to " + path)
 	if err != nil {
 		log.Printf("Error: %s\n", err)
 		return
 	}
 	defer f.Close()
 
-	br := bufio.NewReader(f)
-	s._load(br)
-}
-
-func (s *ServeDNS) read() {
-
+	_, _ = f.Write(b)
 }
 
 func (s *ServeDNS) _load(br *bufio.Reader){
-	s.tree = &Node{}
-
+	log.Println("Reload rules... ")
+	defer func() {
+		if err := recover();err != nil {
+			fmt.Println(err)
+		}
+	}()
+	tree := &Node{}
+	count := 0
 	for {
 		b, _, c := br.ReadLine()
 		if c == io.EOF {
 			break
 		}
-
 		line := strings.TrimSpace(strings.Replace(strings.Trim(string(b), " \t"), "\t", " ", -1))
 		if len(line) == 0 || line[0] == ';' || line[0] == '#' {
 			continue
@@ -117,14 +133,20 @@ func (s *ServeDNS) _load(br *bufio.Reader){
 				hosts := strings.Split(pieces[1], ",")
 				for _, host := range hosts {
 					host = strings.TrimSpace(host)
-					s.tree.addRoute(host, strings.TrimSpace(pieces[0]))
+					tree.addRoute(host, strings.TrimSpace(pieces[0]))
+					count++
 				}
 			}
 		}
 	}
+	log.Println("Reload SUCCESS(", count, ")... ")
+	s.tree = tree
 }
 
 func (s *ServeDNS) find(domain string) string {
+	if s.tree == nil {
+		return domain
+	}
 	handler, _, _ := s.tree.getValue(domain, nil, true)
 
 	if handler != "" {
