@@ -3,6 +3,8 @@
 
 Simple domain redirection tool for debug.
 
+![Snipaste](./Snipaste_2018-12-29_12-23-22.png)
+
 # Config
 
 1. Exec command and open new tabs with urls `http://env/`.
